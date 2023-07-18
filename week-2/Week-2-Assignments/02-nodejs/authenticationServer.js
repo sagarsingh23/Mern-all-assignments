@@ -30,8 +30,87 @@
  */
 
 const express = require("express")
+const bodyParser = require('body-parser')
+const uuid = require('uuid')
 const PORT = 3000;
 const app = express();
 // write your logic here, DONT WRITE app.listen(3000) when you're running tests, the tests will automatically start the server
+
+let users = [];
+
+app.use(bodyParser.json())
+
+app.post('/signup', (req, res) => {
+  let user = req.body;
+  let userAlreadyExists = false;
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].email === user.email) {
+      userAlreadyExists = true;
+      break;
+    }
+  }
+
+  if (userAlreadyExists) res.status(400)
+  else {
+    user = { ...user, id: Math.floor(Math.random() * 1000000) }
+    users.push(user);
+    res.status(201).send("Signup successful");
+  }
+})
+
+app.post('/login', (req, res) => {
+  let data = req.body;
+  let userFound = null;
+
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].email === data.email && users[i].password === data.password) {
+      userFound = { ...users[i], authToken: uuid.v4() };
+      break;
+    }
+  }
+
+  if (userFound) res.json({
+    firstName: userFound.firstName,
+    lastName: userFound.lastName,
+    email: userFound.email
+  })
+  else res.status(401)
+
+})
+
+app.get('/data', (req, res) => {
+  let email = req.headers.email;
+  let password = req.headers.password;
+  let userFound = false;
+
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].email === email && users[i].password == password) {
+      userFound = true;
+      break;
+    }
+  }
+
+  if (userFound) {
+    let userList = [];
+    for (var i = 0; i < users.length; i++) {
+      userList.push({
+        firstName: users[i].firstName,
+        lastName: users[i].lastName,
+        email: users[i].email,
+      })
+    }
+    res.json({users});
+  } else res.sendStatus(401);
+
+})
+
+app.use((req, res, next) => {
+  res.status(404).send("Route not found")
+})
+
+app.listen(PORT, () => {
+  console.log(`Todo Server is listening on port ${PORT}`);
+})
+
 
 module.exports = app;

@@ -121,6 +121,7 @@ describe('Todo API', () => {
     const options = {
       method: 'DELETE',
     };
+    console.log(createdTodoId)
 
     const req = http.request(
       `${baseUrl}/todos/${createdTodoId}`,

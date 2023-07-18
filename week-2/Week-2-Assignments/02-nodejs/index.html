@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Todo</title>
+</head>
+<body>
+  <h1>Todo Server</h1>
+  <input type="text" id="input1" placeholder="Enter Title">
+  <br><br>
+  <input type="text" id="input2" placeholder="Enter Description">
+  <br><br>
+  <button onclick="sendValues()">Send</button>
+  <div id="mainArea"></div>
+
+
+  <script>
+
+    const URL = "http://localhost:3000/todos";
+    let todos = [];
+
+    function sendValues() {
+      var title = document.getElementById("input1").value;
+      var description = document.getElementById("input2").value;
+
+      var data = {
+        title: title,
+        description: description
+      };
+
+      fetch(URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      })
+      .then(res=> res.json()) 
+      .then(data => {
+        appendValues(data);
+      })
+      .catch(function(error) {
+        console.error("Error sending values:", error);
+      });
+    }
+
+
+    function deleteTodo(id) {
+  
+      fetch(`${URL}/${id}`,{
+        method : "DELETE"
+      })
+      .then(res => res.json())
+      .then(data => { 
+         removeChild(id);
+      })
+      .catch(function(error) {
+        console.error("Error sending values:", error);
+      });
+    }
+
+
+    function removeChild(id){
+
+    // Get the parent element
+    var parentElement = document.getElementById("mainArea");
+
+    // Remove all child elements with the class "done"
+    var doneElements = parentElement.getElementsByClassName(`todo-${id}`);
+    while (doneElements.length > 0) {
+        doneElements[0].remove();
+    }
+  }
+
+
+    function appendValues(data){
+      var parentElement = document.getElementById("mainArea");  
+      var childElement = document.createElement("div");
+      childElement.classList.add(`todo-${data.id}`);
+
+      var title = document.createElement("span");
+      title.innerHTML = data.title + ": ";
+ 
+      var description = document.createElement("span");
+      description.innerHTML = data.description + "  ";
+
+      var deleteButton = document.createElement("button");
+      deleteButton.innerHTML = "delete"
+      deleteButton.setAttribute("onclick","deleteTodo(" + data.id + ")");   
+
+
+
+      childElement.appendChild(title);
+      childElement.appendChild(description);
+      childElement.appendChild(deleteButton);
+
+      parentElement.appendChild(childElement)
+    }
+
+    function getValues(){
+        fetch(URL,{
+            method : "GET"
+        })
+        .then(response => response.json())
+        .then((data)=>{
+          for(var i =0;i<data.length;i++){
+               appendValues(data[i]);
+            }
+        })
+    }
+
+    getValues();
+ 
+  </script>
+</body>
+</html>

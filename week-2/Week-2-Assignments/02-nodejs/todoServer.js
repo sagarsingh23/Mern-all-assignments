@@ -40,10 +40,83 @@
   Testing the server - run `npm run test-todoServer` command in terminal
  */
 const express = require('express');
+const cors = require('cors')
+const fs = require('fs');
 const bodyParser = require('body-parser');
-
 const app = express();
-
+const port = 3000;
+var todos = [];
 app.use(bodyParser.json());
+
+app.use(cors());
+
+
+
+app.use(express.static("index.html"));
+
+fs.readFile("todoServerData.json", "utf-8", (err, data) => {
+  if (err) console.log("Cannot find the Todo Server data file")
+  else {
+    todos = JSON.parse(data);
+  }
+})
+
+
+function writeInFile(data) {
+  fs.writeFile("todoServerData.json", data, () => {
+    console.log("writing in a file is done")
+  })
+}
+
+
+
+app.get('/todos', (req, res) => {
+  res.send(todos);
+})
+
+app.get('/todos/:id', (req, res) => {
+  const todo = todos.find(t => t.id === parseInt(req.params.id))
+  if (!todo) res.status(404).send("No todo found");
+  else res.json(todo);
+});
+
+app.post('/todos', (req, res) => {
+  let todo = req.body;
+  todo = { ...todo, id: Math.floor(Math.random() * 100000) };
+  console.log(todo)
+  todos.push(todo);
+  writeInFile(JSON.stringify(todos));
+  res.status(201).send(todo);
+});
+
+app.put('/todos/:id', (req, res) => {
+  const todoIndex = todos.findIndex(t => t.id === parseInt(req.params.id));
+  if (todoIndex === -1) res.status(404).send("No Todo found");
+  else {
+    todos[todoIndex] = { ...todos[todoIndex], ...req.body }
+    writeInFile(JSON.stringify(todos))
+    res.json(todos[todoIndex])
+  }
+});
+
+app.delete('/todos/:id', (req, res) => {
+  const todoIndex = todos.findIndex(t => t.id === parseInt(req.params.id))
+  if (todoIndex === -1) res.status(404).send("No Todo found");
+  else {
+    todos.splice(todoIndex, 1);
+    writeInFile(JSON.stringify(todos))
+    res.status(200).send(todos);
+  }
+});
+
+app.use((req, res, next) => {
+  res.status(404).send("Route not found")
+})
+
+app.listen(port, () => {
+  console.log(`Todo Server is listening on port ${port}`);
+});
+
+
 
 module.exports = app;
